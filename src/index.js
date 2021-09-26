@@ -3,8 +3,14 @@
 
 const express = require('express')
 const {ApolloServer, gql} = require('apollo-server-express')
+require('dotenv').config()
+
+const modeles = require('./modeles/index')
+
+const db = require('./db') //вызов подключения к БД
 
 const port = process.env.PORT || 4000 //запускаем сервер на порте указанном в .env файле или на порте 4000
+const DB_HOST = process.env.DB_HOST //Переменная хоста 
 
 let notes = [
   {id: '1', content: 'This is a note', author: 'Adam Scott'},
@@ -35,25 +41,22 @@ const typeDefs = gql`
 const resolvers = {
   Query: {
     hello: () => 'Hello world!',
-    notes: () => notes,
-    note: (parent, args) => {
-      return notes.find(note => note.id === args.id)
-    },
+    notes: async () => await modeles.Note.find(), //делаем запрос к базе для получения данных
+    note: async (parent, args) =>  await modeles.Note.findById(args.id) //получения конкретных данных БД
   },
   Mutation: {
-    newNote: (parent, args) => {
-      let noteValue = {
-        id: String(notes.length + 1),
+    newNote: async (parent, args) => {
+      return await modeles.Note.create({
         content: args.content,
-        author: 'Adam Scott'
-      }
-      notes.push(noteValue)
-      return noteValue
-    }
+        author: 'Adam Sctorr'
+      })
+    },
   }
 }
 
 const app = express()
+
+db.connect(DB_HOST)//Подключаем БД
 
 //настройка Apollo Server
 const server = new ApolloServer({ typeDefs, resolvers })
@@ -73,6 +76,16 @@ query {
   }
 }
 */
+
+/** запрос для получения одной записили по айди
+ * query {
+  note(id: "6150cc94911fde3ad85dfe3b") {
+    id
+    content
+    author
+  }
+}
+ */
 
 /* запрос на изменение массива данных (мутирования)
 mutation {
