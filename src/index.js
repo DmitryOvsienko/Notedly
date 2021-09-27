@@ -1,65 +1,30 @@
 // index.js
 // This is the main entry point of our application
+/**
+ * для запуска mongosh запускаем cmd от имени админа пишем команду mongosh
+ * запускаем mongod на диске С в папке MongoDB
+ * запускаем скрипт в терминале npm run dev
+ */
 
 const express = require('express')
-const {ApolloServer, gql} = require('apollo-server-express')
+const {ApolloServer} = require('apollo-server-express')
 require('dotenv').config()
 
-const modeles = require('./modeles/index')
-
+/**импортируем локальные модули */
 const db = require('./db') //вызов подключения к БД
+const typeDefs = require('./schema')
+const resolvers = require('./resolvers') //CRUD создавать считывать обновлять удалять общий шаблон с методами
+const modeles = require('./modeles/index')
 
 const port = process.env.PORT || 4000 //запускаем сервер на порте указанном в .env файле или на порте 4000
 const DB_HOST = process.env.DB_HOST //Переменная хоста 
-
-let notes = [
-  {id: '1', content: 'This is a note', author: 'Adam Scott'},
-  {id: '2', content: 'This is another note', author: 'Harlow Everly'},
-  {id: '3', content: 'Oh hey look, another note!', author: 'Riley Harrison'},
-]
-
-//построение схемы с использованием языка схем GraphQl
-const typeDefs = gql` 
-  type Query {
-    hello: String!
-    notes: [Note!]!
-    note(id: ID!): Note!
-  }
-
-  type Note {
-    id: ID!
-    content: String!
-    author: String!
-  }
-
-  type Mutation {
-    newNote(content: String!): Note!
-  }
-`
-
-//функция разрешения для полей схемы
-const resolvers = {
-  Query: {
-    hello: () => 'Hello world!',
-    notes: async () => await modeles.Note.find(), //делаем запрос к базе для получения данных
-    note: async (parent, args) =>  await modeles.Note.findById(args.id) //получения конкретных данных БД
-  },
-  Mutation: {
-    newNote: async (parent, args) => {
-      return await modeles.Note.create({
-        content: args.content,
-        author: 'Adam Sctorr'
-      })
-    },
-  }
-}
 
 const app = express()
 
 db.connect(DB_HOST)//Подключаем БД
 
 //настройка Apollo Server
-const server = new ApolloServer({ typeDefs, resolvers })
+const server = new ApolloServer({ typeDefs, resolvers, context: () => {return {modeles}} })
 
 //применяем промежуточное ПО Apollo GraphQl и указываем путь к /api
 server.applyMiddleware({ app, path: '/api' })
