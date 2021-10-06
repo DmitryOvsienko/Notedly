@@ -9,6 +9,17 @@
 const express = require('express')
 const {ApolloServer} = require('apollo-server-express')
 require('dotenv').config()
+const jwt = require('jsonwebtoken')
+
+const getUser = token => {
+  if (token) {
+    try {
+      return jwt.verify(token, process.env.JWT_SECRET) // если токен годный возвращаем информацию пользователя из токена
+    } catch (err) {
+      new Error('Session invalid')
+    }
+  }
+}
 
 /**импортируем локальные модули */
 const db = require('./db') //вызов подключения к БД
@@ -24,7 +35,16 @@ const app = express()
 db.connect(DB_HOST)//Подключаем БД
 
 //настройка Apollo Server
-const server = new ApolloServer({ typeDefs, resolvers, context: () => {return {modeles}} })
+const server = new ApolloServer({ 
+  typeDefs, 
+  resolvers, 
+  context: ({ req }) => {
+    const token = req.headers.authorization //получаем токен пользователя из заголовка
+    const user = getUser(token) //пытаемся извлечь пользователя с помощью токена
+    console.log(user)
+    return { modeles, user } //возвращаем модель и пользователя
+    } 
+  })
 
 //применяем промежуточное ПО Apollo GraphQl и указываем путь к /api
 server.applyMiddleware({ app, path: '/api' })
