@@ -1,6 +1,5 @@
 const mongoose = require('mongoose')
 
-
 module.exports = {
   connect: DB_HOST => {
     mongoose.set('useNewUrlParser',true) //Обновленный парсер строки URL драйвера Mongo
