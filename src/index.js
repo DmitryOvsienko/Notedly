@@ -4,7 +4,8 @@
  * для запуска mongosh запускаем cmd от имени админа пишем команду mongosh
  * запускаем mongod на диске С в папке MongoDB
  * запускаем скрипт в терминале npm run dev
- * ГЛАВА 10 детали стр 110
+ * запускаем web/ npm run dev
+ * Глава 14. Работа с Apollo Client Пагинация стр 166
  */
 
 const express = require('express')
